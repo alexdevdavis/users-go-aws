@@ -1,8 +1,8 @@
 package app
 
 import (
-	"lambda_func/api"
-	"lambda_func/database"
+	"lambda-func/api"
+	"lambda-func/database"
 )
 
 type App struct {
