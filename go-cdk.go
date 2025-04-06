@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/aws/aws-cdk-go/awscdk/v2"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awsapigateway"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
 	"github.com/aws/constructs-go/constructs/v10"
@@ -36,12 +37,23 @@ func NewGoCdkStack(scope constructs.Construct, id string, props *GoCdkStackProps
 	// make sure we don't get a permissions error!
 	table.GrantReadWriteData(myFunction)
 
-	// The code that defines your stack goes here
+	api := awsapigateway.NewRestApi(stack, jsii.String("myApiGateway"), &awsapigateway.RestApiProps{
+		DefaultCorsPreflightOptions: &awsapigateway.CorsOptions{
+			AllowHeaders: jsii.Strings("Content-Type", "Authorization"),
+			AllowMethods: jsii.Strings("GET", "POST", "DELETE", "PUT", "OPTIONS"),
+			AllowOrigins: jsii.Strings("*"),
+		},
+		DeployOptions: &awsapigateway.StageOptions{
+			LoggingLevel: awsapigateway.MethodLoggingLevel_INFO,
+		},
+	})
 
-	// example resource
-	// queue := awssqs.NewQueue(stack, jsii.String("GoCdkQueue"), &awssqs.QueueProps{
-	// 	VisibilityTimeout: awscdk.Duration_Seconds(jsii.Number(300)),
-	// })
+	integration := awsapigateway.NewLambdaIntegration(myFunction, nil)
+
+	registerResource := api.Root().AddResource(jsii.String("register"), nil)
+	registerResource.AddMethod(jsii.String("POST"), integration, nil)
+	loginResource := api.Root().AddResource(jsii.String("login"), nil)
+	loginResource.AddMethod(jsii.String("POST"), integration, nil)
 
 	return stack
 }
